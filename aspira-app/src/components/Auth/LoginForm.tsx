@@ -1,9 +1,12 @@
 // components/login/LoginForm.jsx
-import { useState } from "react";
+import { FormEvent, useState } from "react";
 import { Compass, Eye, EyeOff, ArrowRight } from "lucide-react";
 import {Link} from "react-router-dom"
 export default function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+
 
   return (
     <div className="w-full max-w-md bg-white rounded-3xl shadow-lg p-8 md:p-10">
@@ -54,9 +57,11 @@ export default function LoginForm() {
 
         <button
           type="submit"
+          disabled={isSubmitting}
           className="w-full flex items-center justify-center gap-2 px-6 py-3 rounded-lg bg-[#121D33] text-white text-sm font-semibold"
         >
-          Sign In <ArrowRight size={16} />
+           {isSubmitting ? "Signing in..." : "Log In"}{" "}
+           <ArrowRight size={16} />
         </button>
       </form>
 
