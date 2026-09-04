@@ -16,6 +16,7 @@ import {
   Link,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
 
 export type MenuItemId =
   | "dashboard"
@@ -82,8 +83,10 @@ const Sidebar: React.FC<SidebarProps> = ({
   user = defaultUser,
 }) => {
   const navigate = useNavigate();
-  const handleLogout = () => {
-    onLogout?.();
+  const { logout } = useAuth();
+  const handleLogout = async () => {
+    // onLogout?.();
+    await logout(); // Call the logout function from AuthContext
     navigate("/login"); // Redirect to the login page after logout
   };
 
