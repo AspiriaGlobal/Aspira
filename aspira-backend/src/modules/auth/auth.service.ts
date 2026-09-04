@@ -108,3 +108,23 @@ export const refreshTokens = async (incomingToken: string) => {
 
   return { accessToken, refreshToken };
 };
+export const logoutUser = async (incomingToken: string) => {
+  let payload;
+  try {
+    payload = verifyRefreshToken(incomingToken);
+  } catch {
+    // Token invalid/expired — nothing to revoke server-side, but that's fine,
+    // logout should still succeed from the client's perspective.
+    return;
+  }
+
+  const candidates = await findRefreshTokensByUserId(payload.userId);
+
+  for (const candidate of candidates) {
+    const isMatch = await comparePassword(incomingToken, candidate.tokenHash);
+    if (isMatch) {
+      await deleteRefreshTokenById(candidate.id);
+      break;
+    }
+  }
+};

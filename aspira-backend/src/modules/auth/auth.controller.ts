@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { signupSchema, loginSchema } from "./auth.schema";
-import { loginUser, refreshTokens, signupUser } from "./auth.service";
+import { loginUser, refreshTokens, signupUser, logoutUser } from "./auth.service";
 import { AppError } from "../../utils/AppError";
 import { email } from "zod";
 import { hashPassword } from "../../utils/hash";
@@ -107,4 +107,20 @@ export const refreshController = async (req: Request, res: Response, next: NextF
   } catch (err) {
     next(err);
   }
+};
+
+export const logoutController = async (req: Request, res: Response) => {
+  const incomingToken = req.cookies?.refreshToken;
+
+  if (incomingToken) {
+    await logoutUser(incomingToken);
+  }
+
+  res.clearCookie("refreshToken", {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+  });
+
+  res.status(200).json({ message: "Logged out successfully" });
 };
