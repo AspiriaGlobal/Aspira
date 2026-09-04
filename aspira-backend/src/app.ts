@@ -10,6 +10,11 @@ dotenv.config();
 const app = express();
 const allowedOrigins = [process.env.FRONTEND_URL as string];
 
+
+if (process.env.NODE_ENV !== "production") {
+  allowedOrigins.push("http://localhost:5173");
+}
+
 app.use(express.json());
 app.use(cookieParser())
 
