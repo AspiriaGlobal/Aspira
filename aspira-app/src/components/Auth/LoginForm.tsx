@@ -78,12 +78,20 @@ export default function LoginForm() {
       <h1 className="font-serif font-bold text-3xl text-[#121D33] mb-2">
         Welcome Back
       </h1>
+      
+      {error && (
+        <div className="mb-4 px-4 py-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-700">
+          {error}
+        </div>
+      )}
       <p className="text-sm text-[#8A93A6] mb-8">
         Don't have an account?{" "}
         <Link to="/signup" className="underline text-[#121D33]">
           Sign Up
         </Link>
       </p>
+
+      
 
       <form className="space-y-5" onSubmit={handleSubmit}>
         <div>
