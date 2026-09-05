@@ -1,9 +1,8 @@
 import { Request, Response, NextFunction } from "express";
-import { signupSchema, loginSchema } from "./auth.schema";
-import { loginUser, refreshTokens, signupUser, logoutUser } from "./auth.service";
+import { signupSchema, loginSchema, googleAuthSchema } from "./auth.schema";
+import { loginUser, refreshTokens, signupUser, logoutUser, loginWithGoogle } from "./auth.service";
 import { AppError } from "../../utils/AppError";
-import { email } from "zod";
-import { hashPassword } from "../../utils/hash";
+
 
 export const signupController = async (
     req: Request,
@@ -123,4 +122,40 @@ export const logoutController = async (req: Request, res: Response) => {
   });
 
   res.status(200).json({ message: "Logged out successfully" });
+};
+
+export const googleLoginController = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const parsed = googleAuthSchema.safeParse(req.body);
+
+        if (!parsed.success) {
+            const errors = parsed.error.issues.map((issue) => ({
+                field: issue.path.join("."),
+                message: issue.message,
+            }));
+
+            return res.status(400).json({
+                message: "Validation failed",
+                errors,
+            });
+        }
+
+        const { user, accessToken, refreshToken } = await loginWithGoogle(parsed.data.idToken);
+
+        res.cookie("refreshToken", refreshToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+            maxAge: 2 * 24 * 60 * 60 * 1000,
+        });
+
+        return res.status(200).json({
+            message: "Login successful",
+            user,
+            accessToken,
+        });
+
+    } catch (error) {
+        next(error);
+    }
 };
