@@ -5,6 +5,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { api } from "../../stats/api/axios"; // adjust path to match your structure
 import { useAuth } from "../../context/AuthContext"; // adjust path
 import axios from "axios";
+import { GoogleLogin, CredentialResponse } from "@react-oauth/google";
 
 export default function SignupForm() {
   const [role, setRole] = useState("student");
@@ -20,13 +21,25 @@ export default function SignupForm() {
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const { setAccessToken } = useAuth();
+  const { setAccessToken, loginwithGoogle } = useAuth();
   const navigate = useNavigate();
 
   function handleChange(e: ChangeEvent<HTMLInputElement>) {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   }
-
+  async function handleGoogleSuccess(credentialResponse: CredentialResponse) {
+    setError("");
+    if (!credentialResponse.credential) {
+      setError("Google sign-in failed. Please try again.");
+      return;
+    }
+    try {
+      await loginwithGoogle(credentialResponse.credential);
+      navigate("/dashboard");
+    } catch (err) {
+      setError("Google sign-in failed. Please try again.");
+    }
+  }
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError("");
@@ -220,10 +233,10 @@ export default function SignupForm() {
         <span className="text-xs text-[#8A93A6]">or continue with</span>
         <div className="flex-1 h-px bg-[#8A93A6]/30" />
       </div>
-
-      <button className="w-full flex items-center justify-center gap-2 px-6 py-3 rounded-lg border border-[#8A93A6]/30 text-sm font-medium text-[#121D33]">
-        <span className="text-lg">G</span> Continue with Google
-      </button>
+      <GoogleLogin
+        onSuccess={handleGoogleSuccess}
+        onError={() => setError("Google sign-in failed. Please try again.")}
+      />
     </div>
   );
 }
