@@ -161,11 +161,13 @@ export default function LoginForm() {
         <span className="text-xs text-[#8A93A6]">or continue with</span>
         <div className="flex-1 h-px bg-[#8A93A6]/30" />
       </div>
-
-     <GoogleLogin
-     onSuccess={handleGoogleSuccess}
-     onError={() => setError("Google sign-in failed. Please try again.")}
-     />
+      <div className="flex justify-center">
+        <GoogleLogin
+          onSuccess={handleGoogleSuccess}
+          onError={() => setError("Google sign-in failed. Please try again.")}
+          text="signin_with"
+        />
+      </div>
     </div>
   );
 }
