@@ -5,13 +5,15 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
-}
+  directUrl = env("DIRECT_URL")
+    }
 
 model User {
   id            String               @id @default(uuid())
   email         String               @unique
-  passwordHash  String
+  passwordHash  String?
   name          String
+  googleId      String?              @unique
   createdAt     DateTime             @default(now())
   updatedAt     DateTime             @updatedAt
   resetTokens   PasswordResetToken[]
