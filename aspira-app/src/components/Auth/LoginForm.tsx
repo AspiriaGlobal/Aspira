@@ -4,6 +4,7 @@ import { Compass, Eye, EyeOff, ArrowRight } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { api } from "../../stats/api/axios";
 import { useAuth } from "../../context/AuthContext";
+
 import axios from "axios";
 export default function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
@@ -13,15 +14,14 @@ export default function LoginForm() {
     password: "",
   });
 
-
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const {setAccessToken} = useAuth();
+  const { setAccessToken } = useAuth();
   const navigate = useNavigate();
   function handleChange(e: ChangeEvent<HTMLInputElement>) {
-      setFormData({ ...formData, [e.target.name]: e.target.value });
-    }
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  }
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError("");
@@ -31,7 +31,7 @@ export default function LoginForm() {
     }
     setIsSubmitting(true);
     try {
-      const {data} = await api.post("/auth/login", {
+      const { data } = await api.post("/auth/login", {
         email: formData.email,
         password: formData.password,
       });
@@ -39,7 +39,7 @@ export default function LoginForm() {
       navigate("/dashboard");
 
       // Handle successful login, e.g., store token, redirect, etc.
-     } catch (err) {
+    } catch (err) {
       if (axios.isAxiosError(err)) {
         const responseData = err.response?.data;
 
@@ -63,6 +63,7 @@ export default function LoginForm() {
       setIsSubmitting(false);
     }
   }
+  
 
   return (
     <div className="w-full max-w-md bg-white rounded-3xl shadow-lg p-8 md:p-10">
@@ -78,7 +79,7 @@ export default function LoginForm() {
       <h1 className="font-serif font-bold text-3xl text-[#121D33] mb-2">
         Welcome Back
       </h1>
-      
+
       {error && (
         <div className="mb-4 px-4 py-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-700">
           {error}
@@ -90,8 +91,6 @@ export default function LoginForm() {
           Sign Up
         </Link>
       </p>
-
-      
 
       <form className="space-y-5" onSubmit={handleSubmit}>
         <div>
@@ -121,7 +120,6 @@ export default function LoginForm() {
               value={formData.password}
               onChange={handleChange}
               placeholder="••••••••"
-            
               className="w-full px-4 py-3 rounded-lg border border-[#8A93A6]/30 text-sm focus:outline-none focus:border-[#E0A63C] pr-10"
             />
             <button

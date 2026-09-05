@@ -1,12 +1,12 @@
 // auth.service.ts
-import { findUserByEmail, createUser, saveRefreshToken, findRefreshTokensByUserId, deleteRefreshTokenById} from "./auth.repository";
+import { findUserByEmail, createUser, saveRefreshToken, findRefreshTokensByUserId, deleteRefreshTokenById, findUserByGoogleId, linkGoogleId} from "./auth.repository";
 import { comparePassword, hashPassword } from "../../utils/hash";
 import { AppError } from "../../utils/AppError";
 import { SignupInput } from "./auth.schema";
 import { generateAccessToken, generateRefreshToken, REFRESH_TOKEN_EXPIRY_MS, verifyRefreshToken} from "../../utils/token";
+import { OAuth2Client} from "google-auth-library";
 
-// Shared by signup and login — both need to issue an access token,
-// generate + hash a refresh token, and persist the hash.
+const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 async function issueTokens(userId: string) {
   const accessToken = generateAccessToken({ userId });
   const refreshToken = generateRefreshToken({ userId });
@@ -53,6 +53,11 @@ export const signupUser = async (input: SignupInput) => {
 export const loginUser = async (data: { email: string; password: string }) => {
   const user = await findUserByEmail(data.email);
   if (!user) {
+    throw new AppError("Invalid email or password", 401);
+  }
+
+    if (!user.passwordHash) {
+    // User exists but has no password set — they signed up via Google only.
     throw new AppError("Invalid email or password", 401);
   }
 
@@ -127,4 +132,62 @@ export const logoutUser = async (incomingToken: string) => {
       break;
     }
   }
+};
+
+export const loginWithGoogle = async (idToken: string) => {
+  let payload;
+  try {
+    const ticket = await googleClient.verifyIdToken({
+      idToken,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+    payload = ticket.getPayload();
+  } catch {
+    throw new AppError("Invalid Google ID token", 401);
+  }
+
+  if (!payload || !payload.email) {
+    throw new AppError("Invalid Google ID token", 401);
+  }
+
+  const { sub: googleId, email, email_verified, name } = payload;
+
+  // Case 1: already linked — this googleId maps to a known user
+  const existingUser = await findUserByGoogleId(googleId);
+  if (existingUser) {
+    const { accessToken, refreshToken } = await issueTokens(existingUser.id);
+    return {
+      accessToken,
+      refreshToken,
+      user: { id: existingUser.id, email: existingUser.email, name: existingUser.name },
+    };
+  }
+
+  // Case 2: user signed up with email/password before, now using Google for the first time
+  const userByEmail = await findUserByEmail(email);
+  if (userByEmail) {
+    if (!email_verified) {
+      throw new AppError("Google email is not verified", 401);
+    }
+    await linkGoogleId(userByEmail.id, googleId);
+    const { accessToken, refreshToken } = await issueTokens(userByEmail.id);
+    return {
+      accessToken,
+      refreshToken,
+      user: { id: userByEmail.id, email: userByEmail.email, name: userByEmail.name },
+    };
+  }
+
+  // Case 3: brand new user — never existed by googleId or email
+  const newUser = await createUser({
+    email,
+    name: name ?? "Google User",
+    googleId,
+  });
+  const { accessToken, refreshToken } = await issueTokens(newUser.id);
+  return {
+    accessToken,
+    refreshToken,
+    user: { id: newUser.id, email: newUser.email, name: newUser.name },
+  };
 };

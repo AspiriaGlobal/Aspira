@@ -6,12 +6,19 @@ export const findUserByEmail = async (email: string) => {
 
 export const createUser = async (data: {
   email: string;
-  passwordHash: string;
+  passwordHash?: string;
   name: string;
+  googleId?: string;
 }) => {
   return prisma.user.create({ data });
 };
 
+export const linkGoogleId = async (userId: string, googleId: string) => {
+  return prisma.user.update({
+    where: { id: userId },
+    data: { googleId },
+  });
+}
 export const saveRefreshToken = async (data: {
   userId: string;
   tokenHash: string;
@@ -34,3 +41,7 @@ export const findRefreshTokensByUserId = async (userId: string) => {
 export const deleteRefreshTokenById = async (id: string) => {
   return prisma.refreshToken.delete({ where: { id } });
 };
+
+export async function findUserByGoogleId(googleId: string) {
+  return prisma.user.findUnique({ where: { googleId } });
+}
